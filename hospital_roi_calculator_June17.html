@@ -1190,12 +1190,13 @@ let viewerMode = false;
 function activateViewerMode(){
   viewerMode = true;
   document.querySelector('.app').classList.add('viewer-mode');
-  // Force presentation mode on
   const t = document.getElementById("boldUIToggle");
   if(t && !t.checked){ t.checked = true; onBoldUI(); }
-  // Hide edit mode button in viewer mode (no way back)
-  const editBtn = document.getElementById("exportBtn");
-  if(editBtn) editBtn.style.display = "none";
+  // Hide both buttons — viewer can't edit or reshare
+  const editBtn  = document.getElementById("exportBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  if(editBtn)  editBtn.style.display  = "none";
+  if(shareBtn) shareBtn.style.display = "none";
 }
 
 // ── Shareable Link ────────────────────────────────────────────────
@@ -1250,7 +1251,8 @@ function buildShareableURL(){
     if(str) p.set('popups', str);
   }
 
-  return window.location.href.split('?')[0] + '?' + p.toString();
+  const baseURL = 'https://scotttykoski.github.io/FortressROICalcAppTest/hospital_roi_calculator_June17.html';
+  return baseURL + '?' + p.toString();
 }
 
 async function copyShareableLink(){
@@ -1332,6 +1334,12 @@ async function copyShareableLink(){
 
   if(p.has("steel")||p.has("solid")||p.has("cpd")) onUniversal();
   else if(needsRender){ renderCards(); rebuildChart(); }
+
+  // Restore estimate visibility
+  if(p.has("vis")){
+    const v = p.get("vis");
+    [0,1,2,3].forEach(i=>{ visible[i] = v[i] !== '0'; });
+  }
 
   if(p.has("viewer"))           activateViewerMode();
   if(p.has("upgradeROI")){
