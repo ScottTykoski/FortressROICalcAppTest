@@ -327,7 +327,7 @@
     <!-- Title above the bar -->
     <div style="text-align:left;line-height:1.1">
       <div style="font-family:var(--futura);font-weight:900;font-size:78px;color:#FFBE32;letter-spacing:-0.03em;line-height:1">Fortress ROI Calculator</div>
-      <div style="font-family:var(--futura);font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.04em;margin-top:4px;text-transform:uppercase">Your Investment Pays for Itself After a Single OR Downtime Event</div>
+      <div id="brandSubheader" style="font-family:var(--futura);font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.04em;margin-top:4px;text-transform:uppercase">Your Investment Pays for Itself After a Single OR Downtime Event</div>
     </div>
     <!-- Gradient equation bar — fills remaining height, centers content -->
     <div style="background:linear-gradient(to right, #3c5b70, #364c5a, #303d43);border-radius:0;flex:1;display:flex;align-items:center;justify-content:center;gap:20px;padding:10px 18px">
@@ -375,6 +375,14 @@
     </div>
   </div>
 
+  <!-- Tab strip -->
+  <div style="display:flex;gap:0;flex-shrink:0;border-bottom:2px solid var(--border);margin-bottom:8px">
+    <button id="tabBtnRoi"     onclick="switchTab('roi')"     style="font-family:var(--futura);font-size:11px;font-weight:700;padding:6px 18px;border:none;background:var(--text);color:#fff;cursor:pointer;letter-spacing:.04em">ROI CALCULATOR</button>
+    <button id="tabBtnInstall" onclick="switchTab('install')" style="font-family:var(--futura);font-size:11px;font-weight:700;padding:6px 18px;border:none;background:transparent;color:var(--muted);cursor:pointer;letter-spacing:.04em">INSTALLATION ADVANTAGE</button>
+  </div>
+
+  <!-- ROI tab content -->
+  <div id="tabRoi" style="display:flex;flex-direction:column;flex:1;min-height:0;gap:8px">
   <div class="body">
     <div class="sidebar">
 
@@ -469,6 +477,65 @@
   <div style="flex-shrink:0;margin-top:5px;padding-top:5px;border-top:1px solid var(--border);font-size:9px;color:var(--muted);line-height:1.55;opacity:.9;font-weight:600">
     This calculator is for estimation and forecasting purposes only. $80,000 per day OR downtime cost comes from a national average — your downtime numbers may vary. Consult your financial department for a more detailed look at potential lost revenue from a downtime event. Results are projections based on user-entered inputs and do not constitute financial advice.
   </div>
+  </div><!-- end tabRoi -->
+
+  <!-- Installation Advantage tab -->
+  <div id="tabInstall" style="display:none;flex:1;min-height:0;flex-direction:column;gap:8px">
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;padding:6px 10px;background:#fff;border:1px solid #DDDEDD">
+      <div style="font-family:var(--futura);font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em">CONFIGURE</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+        <label style="color:var(--muted);font-weight:600">ORs being built</label>
+        <input type="number" id="iaNumORs" value="1" min="1" max="20" step="1" oninput="renderInstall()" style="width:50px;font-size:12px;padding:3px 6px;height:26px;border:1px solid var(--border);font-family:var(--futura);font-weight:700">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px">
+        <label style="color:var(--muted);font-weight:600">Revenue / day</label>
+        <div style="display:flex;align-items:center;gap:2px"><span style="font-size:11px;color:var(--muted)">$</span>
+        <input type="number" id="iaCostDay" value="80000" step="5000" min="0" oninput="renderInstall()" style="width:80px;font-size:12px;padding:3px 6px;height:26px;border:1px solid var(--border);font-family:var(--futura);font-weight:700"></div>
+      </div>
+      <div id="iaROI" style="margin-left:auto;font-family:var(--futura);font-size:13px;font-weight:700;color:#1a1d23"></div>
+      <button onclick="resetIA()" style="flex-shrink:0;margin-left:8px;border:1px solid var(--border);background:transparent;color:var(--muted);padding:4px 12px;font-size:10px;font-weight:700;font-family:var(--futura);cursor:pointer;letter-spacing:.04em" title="Reset all values to defaults">↺ RESET</button>
+    </div>
+
+    <!-- Main content -->
+    <div style="display:flex;gap:0;flex:1;min-height:0">
+
+      <!-- Activity table -->
+      <div id="iaLeft" style="width:42%;flex-shrink:0;overflow:hidden;border:1px solid #DDDEDD;background:#fff;min-width:180px;align-self:stretch">
+        <table id="iaTable" style="width:100%;border-collapse:collapse;font-size:11px"></table>
+      </div>
+
+      <!-- IA Resizer -->
+      <div id="iaResizer" style="width:10px;flex-shrink:0;cursor:col-resize;display:flex;align-items:center;justify-content:center;touch-action:none">
+        <span style="display:block;width:3px;height:48px;background:#dde1e8;border-radius:0;transition:background .15s" id="iaResizerBar"></span>
+      </div>
+
+      <!-- Gantt -->
+      <div style="flex:1;min-width:0;background:#fff;border:1px solid #DDDEDD;border-left:none;display:flex;flex-direction:column;padding:8px 12px 6px">
+        <svg id="ganttSvg" style="width:100%;flex:1"></svg>
+        <!-- Summary bar -->
+        <div style="display:flex;gap:0;flex-shrink:0;border-top:2px solid var(--border);padding-top:8px;margin-top:4px">
+          <div style="flex:1;text-align:center;padding:6px;border-right:1px solid var(--border)">
+            <div style="font-family:var(--futura);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:2px">TRADITIONAL DRYWALL</div>
+            <div id="iaSumTrad" style="font-family:var(--futura);font-size:26px;font-weight:900;color:#2C3E50;line-height:1">19 <span style="font-size:13px">DAYS</span></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:6px;border-right:1px solid var(--border)">
+            <div style="font-family:var(--futura);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:2px">FORTRESS SYSTEM</div>
+            <div id="iaSumFort" style="font-family:var(--futura);font-size:26px;font-weight:900;color:#FFBE32;line-height:1">12 <span style="font-size:13px">DAYS</span></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:6px;border-right:1px solid var(--border)">
+            <div style="font-family:var(--futura);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:2px">TIME SAVINGS</div>
+            <div id="iaSumSav" style="font-family:var(--futura);font-size:26px;font-weight:900;color:#2E7D32;line-height:1">7 <span style="font-size:13px">DAYS</span></div>
+          </div>
+          <div style="flex:1;text-align:center;padding:6px">
+            <div style="font-family:var(--futura);font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:2px">REVENUE RECOVERED</div>
+            <div id="iaSummaryRev" style="font-family:var(--futura);font-size:22px;font-weight:900;color:#4C7D7A;line-height:1">$560K</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- end tabInstall -->
 
 </div>
 
@@ -1180,9 +1247,280 @@ function exitPresentationMode(){
   requestAnimationFrame(()=>requestAnimationFrame(refreshAllConnectors));
 }
 
+// ── Installation Advantage ─────────────────────────────────────────
+// ── Installation Advantage ────────────────────────────────────────
+const IA_TRAD_COL = "#2C3E50";
+const IA_FORT_COL = "#FFBE32";
+const IA_SAVE_COL = "#2E7D32";
+
+// Activity data — trad/fort are editable; starts computed dynamically
+const IA_ACT = [
+  { id:1,  name:"Frame walls – standard 20-gauge studs",                          trad:2,   fort:2,   concurrent:false },
+  { id:2,  name:"In-wall MEP rough in",                                            trad:5,   fort:5,   concurrent:false },
+  { id:3,  name:"Install Fortress floor & ceiling profiles\n(during MEP rough in)",trad:0,   fort:0,   concurrent:true  },
+  { id:4,  name:"Complete ceiling buildout (lighting, HVAC, etc.)",                trad:3,   fort:3,   concurrent:false },
+  { id:5,  name:"Install panel substructure (horizontal strapping)",               trad:0,   fort:1,   concurrent:false },
+  { id:6,  name:"Fortress panel installation",                                      trad:0,   fort:1,   concurrent:false },
+  { separator:true, label:"FORTRESS INSTALLATION COMPLETE — TRADITIONAL WALLS REQUIRE ADDITIONAL TIME BELOW" },
+  { id:7,  name:"Install drywall below ceiling height",                             trad:1.5, fort:0,   concurrent:false },
+  { id:8,  name:"Tape/float walls & paint above 48\" (level 5 finish)",             trad:4,   fort:0,   concurrent:false },
+  { id:9,  name:"Wall protection installation to 48\"",                             trad:3,   fort:0,   concurrent:false },
+  { id:10, name:"Install additional wall protection (corner guards, etc.)",         trad:0.5, fort:0,   concurrent:false },
+];
+
+function computeIA(){
+  const rows=IA_ACT.filter(a=>!a.separator);
+  let tradCum=0, fortCum=0;
+  rows.forEach((row,i)=>{
+    if(row.concurrent){
+      row.tradStart=rows[i-1].tradStart;
+      row.fortStart=rows[i-1].fortStart;
+    } else {
+      row.tradStart=tradCum;
+      row.fortStart=fortCum;
+      tradCum+=row.trad||0;
+      fortCum+=row.fort||0;
+    }
+  });
+  return{tradTotal:tradCum, fortTotal:fortCum, savings:tradCum-fortCum, rows};
+}
+
+// Default values for reset
+const IA_DEFAULTS = [
+  {trad:2,fort:2},{trad:5,fort:5},{trad:0,fort:0},{trad:3,fort:3},
+  {trad:0,fort:1},{trad:0,fort:1},{trad:1.5,fort:0},{trad:4,fort:0},
+  {trad:3,fort:0},{trad:0.5,fort:0},
+];
+
+function resetIA(){
+  let di=0;
+  IA_ACT.forEach(act=>{ if(!act.separator){ act.trad=IA_DEFAULTS[di].trad; act.fort=IA_DEFAULTS[di].fort; di++; }});
+  renderInstall();
+}
+
+const IA_SNARKY = [
+  "I Assure You, Fortress Will Not Take Longer than Traditional Walls.",
+  "Adding Those Buttons Was a Bad Idea.",
+  "Someone Got a Bit Click Happy.",
+  "Luckily We Added a Reset Button for Situations Like This.",
+];
+
+function updateBrandSubheader(tab){
+  const el=document.getElementById('brandSubheader');
+  if(!el) return;
+  if(tab==='install'){
+    const {savings}=computeIA();
+    if(savings<0){
+      const msg=IA_SNARKY[Math.floor(Math.random()*IA_SNARKY.length)];
+      el.textContent=msg;
+      el.style.color='#e74c3c';
+    } else {
+      const ors=Math.max(1,parseInt(document.getElementById('iaNumORs')?.value)||1);
+      const cpd=parseFloat(document.getElementById('iaCostDay')?.value)||80000;
+      el.textContent=`Your OR Opens ${savings} Day${savings!==1?'s':''} Sooner — ${fmtIA(savings*ors*cpd)} in Recovered Revenue`;
+      el.style.color='';
+    }
+  } else {
+    el.textContent='Your Investment Pays for Itself After a Single OR Downtime Event';
+    el.style.color='';
+  }
+}
+
+function onIAInput(id, field, val){
+  const act=IA_ACT.find(a=>a.id===id);
+  if(act) act[field]=parseFloat(val)||0;
+  renderInstall();
+}
+
+function switchTab(tab){
+  const isRoi=tab==='roi';
+  document.getElementById('tabRoi').style.display    =isRoi?'flex':'none';
+  document.getElementById('tabInstall').style.display=isRoi?'none':'flex';
+  document.getElementById('tabBtnRoi').style.background    =isRoi?'var(--text)':'transparent';
+  document.getElementById('tabBtnRoi').style.color         =isRoi?'#fff':'var(--muted)';
+  document.getElementById('tabBtnInstall').style.background=isRoi?'transparent':'var(--text)';
+  document.getElementById('tabBtnInstall').style.color     =isRoi?'var(--muted)':'#fff';
+  document.querySelector('.span-btns').style.display=isRoi?'':'none';
+  updateBrandSubheader(tab);
+  if(!isRoi) requestAnimationFrame(()=>requestAnimationFrame(renderInstall));
+}
+
+function fmtIA(n){
+  if(n>=1000000) return '$'+(n/1000000).toFixed(1).replace(/\.0$/,'')+'M';
+  if(n>=1000)    return '$'+Math.round(n/1000)+'K';
+  return '$'+n;
+}
+
+function renderInstall(){
+  const computed=computeIA();
+  const {tradTotal,fortTotal,savings,rows}=computed;
+  const ors=Math.max(1,parseInt(document.getElementById('iaNumORs').value)||1);
+  const cpd=parseFloat(document.getElementById('iaCostDay').value)||80000;
+  const rev=savings*ors*cpd;
+
+  const g=id=>document.getElementById(id);
+  if(g('iaSummaryRev')) g('iaSummaryRev').textContent=fmtIA(rev);
+  if(g('iaROI')) g('iaROI').innerHTML=
+    `<span style="color:var(--muted);font-weight:600;font-size:11px">${ors} OR${ors>1?'s':''} × ${savings} days × ${fmtIA(cpd)}/day = </span>`+
+    `<span style="color:#2E7D32">${fmtIA(rev)} recovered</span>`;
+  if(g('iaSumTrad')) g('iaSumTrad').textContent=tradTotal+' DAYS';
+  if(g('iaSumFort')) g('iaSumFort').textContent=fortTotal+' DAYS';
+  if(g('iaSumSav'))  g('iaSumSav').textContent=savings+' DAYS';
+  updateBrandSubheader('install');
+
+  requestAnimationFrame(()=>{
+    const leftPanel=g('iaLeft');
+    const svgEl=g('ganttSvg');
+    if(!leftPanel||!svgEl) return;
+
+    // Distribute rows evenly across available height
+    const availH=leftPanel.clientHeight||400;
+    const HDR=44, SEP=28, TOT=44;
+    const actH=Math.max(36, Math.floor((availH-HDR-SEP-TOT)/10));
+
+    renderIATable(rows,tradTotal,fortTotal,savings,{hdr:HDR,act:actH,sep:SEP,tot:TOT});
+
+    // Measure actual rendered heights for SVG
+    const trs=Array.from(document.querySelectorAll('#iaTable tr'));
+    const heights=trs.map(r=>r.getBoundingClientRect().height);
+    drawGantt(heights,computed);
+  });
+}
+
+function renderIATable(rows,tradTotal,fortTotal,savings,rh={hdr:32,act:28,sep:20,tot:32}){
+  const inp=(id,field,val,col)=>
+    `<input type="number" value="${val}" step="0.5" min="0"
+      oninput="onIAInput(${id},'${field}',this.value)"
+      style="width:44px;height:24px;border:1px solid transparent;background:transparent;
+             text-align:center;font-family:var(--futura);font-weight:700;font-size:16px;
+             color:${col};padding:0;cursor:pointer;"
+      onfocus="this.style.borderColor='${col}';this.style.background='rgba(0,0,0,.04)'"
+      onblur="this.style.borderColor='transparent';this.style.background='transparent'"
+     >`;
+
+  let html=`<thead><tr style="height:${rh.hdr}px;background:var(--text);color:#fff">
+    <th style="padding:4px 8px;text-align:left;font-family:var(--futura);font-size:13px;font-weight:700;letter-spacing:.05em">ACTIVITY</th>
+    <th style="padding:4px 8px;text-align:center;font-family:var(--futura);font-size:13px;font-weight:700;color:#adb5c6;letter-spacing:.04em">TRAD.</th>
+    <th style="padding:4px 8px;text-align:center;font-family:var(--futura);font-size:13px;font-weight:700;color:${IA_FORT_COL};letter-spacing:.04em">FORT.</th>
+    <th style="padding:4px 8px;text-align:center;font-family:var(--futura);font-size:13px;font-weight:700;letter-spacing:.04em">Δ</th>
+  </tr></thead><tbody>`;
+
+  let ri=0;
+  IA_ACT.forEach(act=>{
+    if(act.separator){
+      html+=`<tr style="height:${rh.sep}px"><td colspan="4" style="background:#f5f5f5;padding:2px 8px;font-family:var(--futura);font-size:11px;font-weight:700;color:var(--text);letter-spacing:.04em;text-align:center;vertical-align:middle;overflow:hidden;white-space:nowrap">${act.label}</td></tr>`;
+      return;
+    }
+    const row=rows[ri++];
+    const delta=(row.trad||0)-(row.fort||0);
+    const dStr=delta===0?'–':(delta>0?'+'+delta:delta);
+    const dCol=delta>0?'#2E7D32':delta<0?'#c0392b':'var(--muted)';
+    const isBF=row.fort===0&&row.trad>0;
+    html+=`<tr style="height:${rh.act}px;border-bottom:1px solid #eee;${isBF?'background:#fafafa':''}">
+      <td style="padding:2px 6px 2px 8px;font-size:13px;color:var(--text);vertical-align:middle;overflow:hidden;white-space:nowrap">
+        <span style="display:inline-flex;width:14px;height:14px;background:var(--text);color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:7px;font-weight:700;margin-right:4px;flex-shrink:0">${act.id}</span>${act.name.split('\n')[0]}
+      </td>
+      <td style="padding:2px 4px;text-align:center;vertical-align:middle">${inp(act.id,'trad',row.trad,IA_TRAD_COL)}</td>
+      <td style="padding:2px 4px;text-align:center;vertical-align:middle;background:${row.fort>0?'rgba(255,190,50,.08)':'transparent'}">${inp(act.id,'fort',row.fort,IA_FORT_COL)}</td>
+      <td style="padding:2px 4px;text-align:center;vertical-align:middle;font-family:var(--futura);font-weight:700;font-size:16px;color:${dCol}">${dStr}</td>
+    </tr>`;
+  });
+
+  html+=`<tr style="height:${rh.tot}px;background:var(--text)">
+    <td style="padding:4px 8px;font-family:var(--futura);font-size:13px;font-weight:700;color:#fff;letter-spacing:.04em;vertical-align:middle">TOTAL CONSTRUCTION DAYS</td>
+    <td style="padding:4px;text-align:center;font-family:var(--futura);font-size:20px;font-weight:900;color:#fff;vertical-align:middle" id="iaTradTotal">${tradTotal}</td>
+    <td style="padding:4px;text-align:center;font-family:var(--futura);font-size:20px;font-weight:900;color:${IA_FORT_COL};vertical-align:middle" id="iaFortTotal">${fortTotal}</td>
+    <td style="padding:4px;text-align:center;font-family:var(--futura);font-size:20px;font-weight:900;color:#4CD964;vertical-align:middle" id="iaSavTotal">${savings}</td>
+  </tr></tbody>`;
+  document.getElementById('iaTable').innerHTML=html;
+}
+
+function drawGantt(rowHeights, {tradTotal,fortTotal,savings,rows}){
+  const svg=document.getElementById('ganttSvg');
+  if(!svg||!rowHeights||rowHeights.length<2) return;
+  const W=svg.clientWidth||svg.parentElement?.clientWidth||500;
+  if(W<10) return;
+
+  // Build cumulative Y positions from measured row heights
+  // Table rows: [0]=header, [1..6]=acts 1-6, [7]=separator, [8..11]=acts 7-10, [12]=totals
+  const cumY=[0];
+  rowHeights.forEach(h=>cumY.push(cumY[cumY.length-1]+h));
+  const H=cumY[cumY.length-1];
+
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+
+  // Y center of each activity row (activity index 0-9 → table row index)
+  const actY=i=>{
+    const tri=i<6?i+1:i+2; // +1 header, +2 skips separator for rows 7-10
+    return cumY[tri]+(rowHeights[tri]||0)/2;
+  };
+  const padL=10, padR=16, padT=cumY[1]||30;
+  const chartW=W-padL-padR;
+  const maxDay=Math.ceil(tradTotal)+2;
+  const dayW=chartW/maxDay;
+  const x=d=>padL+d*dayW;
+  const barH=Math.max(4, Math.min(10, (rowHeights[1]||28)*0.38));
+
+  let inner='';
+
+  // Column shading for Fortress zone
+  inner+=`<rect x="${padL}" y="${cumY[1]}" width="${x(fortTotal)-padL}" height="${H-cumY[1]}" fill="rgba(255,190,50,0.04)"/>`;
+
+  // Grid lines
+  const step=maxDay<=12?2:5;
+  for(let d=0;d<=maxDay;d+=step){
+    const gx=x(d);
+    inner+=`<line x1="${gx}" y1="${cumY[1]}" x2="${gx}" y2="${H}" stroke="#eee" stroke-width="1"/>`;
+    inner+=`<text x="${gx}" y="${cumY[1]-4}" text-anchor="middle" font-size="8" fill="#aaa" font-family="FuturaStryker,Futura,sans-serif" font-weight="bold">${d}</text>`;
+  }
+  // Header label
+  inner+=`<text x="${padL+chartW/2}" y="${cumY[1]-14}" text-anchor="middle" font-size="8" fill="#bbb" font-family="FuturaStryker,Futura,sans-serif" font-weight="bold" letter-spacing="1">CONSTRUCTION DAY TIMELINE (DAYS PER OR)</text>`;
+
+  // Fortress & Traditional complete lines
+  inner+=`<line x1="${x(fortTotal)}" y1="${cumY[1]}" x2="${x(fortTotal)}" y2="${H}" stroke="${IA_FORT_COL}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>`;
+  inner+=`<line x1="${x(tradTotal)}" y1="${cumY[1]}" x2="${x(tradTotal)}" y2="${H}" stroke="${IA_TRAD_COL}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>`;
+
+  // Separator line
+  inner+=`<line x1="${padL}" y1="${cumY[7]}" x2="${W-padR}" y2="${cumY[7]}" stroke="#ccc" stroke-width="1" stroke-dasharray="3,3"/>`;
+
+  rows.forEach((row,ri)=>{
+    const cy=actY(ri);
+    if(row.trad>0){
+      const bx=x(row.tradStart), bw=Math.max(1,row.trad*dayW);
+      const isBF=row.fort===0&&row.trad>0;
+      inner+=`<rect x="${bx}" y="${cy-(isBF?barH*0.45:barH*0.9)}" width="${bw}" height="${barH}" fill="${IA_TRAD_COL}"/>`;
+    }
+    if(row.fort>0){
+      const bx=x(row.fortStart), bw=Math.max(1,row.fort*dayW);
+      inner+=`<rect x="${bx}" y="${actY(ri)+barH*0.1}" width="${bw}" height="${barH}" fill="${IA_FORT_COL}"/>`;
+    }
+    if(row.fort===0 && row.trad>0){
+      const bx=x(row.tradStart), bw=Math.max(1,row.trad*dayW);
+      inner+=`<rect x="${bx}" y="${cy-barH*0.45}" width="${bw}" height="${barH}" fill="none" stroke="${IA_SAVE_COL}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.8"/>`;
+    }
+  });
+
+  // Legend at bottom
+  const ly=H-3;
+  inner+=`<rect x="${padL}" y="${ly-8}" width="11" height="6" fill="${IA_TRAD_COL}"/>`;
+  inner+=`<text x="${padL+14}" y="${ly}" font-size="8" fill="#555" font-family="FuturaStryker,Futura,sans-serif" font-weight="bold">Traditional drywall construction (${tradTotal} days)</text>`;
+  inner+=`<rect x="${padL+185}" y="${ly-8}" width="11" height="6" fill="${IA_FORT_COL}"/>`;
+  inner+=`<text x="${padL+199}" y="${ly}" font-size="8" fill="#555" font-family="FuturaStryker,Futura,sans-serif" font-weight="bold">Fortress system (${fortTotal} days)</text>`;
+  inner+=`<rect x="${padL+315}" y="${ly-8}" width="11" height="6" fill="none" stroke="${IA_SAVE_COL}" stroke-width="1.5" stroke-dasharray="4,2"/>`;
+  inner+=`<text x="${padL+329}" y="${ly}" font-size="8" fill="#555" font-family="FuturaStryker,Futura,sans-serif" font-weight="bold">Time savings vs. Fortress</text>`;
+
+  svg.innerHTML=inner;
+}
+
+// Resize redraw
+window.addEventListener('resize',()=>{
+  if(document.getElementById('tabInstall').style.display!=='none') renderInstall();
+});
+
 renderCards();
 renderLegend();
 rebuildChart();
+
 
 // ── Viewer Mode ───────────────────────────────────────────────────
 let viewerMode = false;
@@ -1435,7 +1773,37 @@ function scaleEqText(barH){
   document.querySelectorAll(".eq-op") .forEach(el => { el.style.fontSize = opSize + "px"; el.style.paddingBottom = (numSize * 0.4) + "px"; });
 }
 
-// ── Horizontal resizer (brand bar height) ──
+// ── IA panel resizer ──
+(function(){
+  const resizer = document.getElementById("iaResizer");
+  const left    = document.getElementById("iaLeft");
+  const rBar    = document.getElementById("iaResizerBar");
+  if(!resizer||!left) return;
+  let dragging=false, startX=0, startW=0;
+
+  function startDrag(cx){
+    dragging=true; startX=cx; startW=left.getBoundingClientRect().width;
+    rBar.style.background="#9aa"; document.body.style.userSelect="none"; document.body.style.cursor="col-resize";
+  }
+  function moveDrag(cx){
+    if(!dragging) return;
+    const parent=left.parentElement;
+    const maxW=parent.getBoundingClientRect().width*0.72;
+    const newW=Math.min(Math.max(startW+(cx-startX),150),maxW);
+    left.style.width=newW+"px";
+    requestAnimationFrame(renderInstall);
+  }
+  function endDrag(){
+    if(!dragging)return; dragging=false;
+    rBar.style.background=""; document.body.style.userSelect=""; document.body.style.cursor="";
+  }
+  resizer.addEventListener("mousedown",  e=>{ e.preventDefault(); startDrag(e.clientX); });
+  document.addEventListener("mousemove", e=>moveDrag(e.clientX));
+  document.addEventListener("mouseup",   endDrag);
+  resizer.addEventListener("touchstart", e=>{ e.preventDefault(); startDrag(e.touches[0].clientX); },{passive:false});
+  document.addEventListener("touchmove", e=>{ if(dragging){e.preventDefault(); moveDrag(e.touches[0].clientX);}},{passive:false});
+  document.addEventListener("touchend",  endDrag);
+})();
 (function(){
   const resizer  = document.getElementById("hResizer");
   const bar      = document.getElementById("globalBrandBar");
