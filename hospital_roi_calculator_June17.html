@@ -147,7 +147,8 @@
   .viewer-mode input[type=number],
   .viewer-mode input[type=text]  { pointer-events:none; opacity:.7; background:transparent; border-color:transparent; }
   .viewer-mode .toggle           { pointer-events:none; opacity:.6; }
-  .viewer-mode .eye-btn          { pointer-events:none; }
+  .viewer-mode .eye-btn          { pointer-events:none; opacity:0 !important; }
+  .viewer-mode .collapsed-est    { display:none !important; }
   .viewer-mode #universalPanel   { display:none !important; }
 
   .export-btn {
@@ -579,7 +580,7 @@ const spanData = [0,1,2,3].map(i => ({
   30: { totalEvents:[6,9,12,16][i], daysPerEvent:1.5 },
 }));
 
-let span=10, chartInst=null;
+let span=10, chartInst=null, viewerMode=false;
 const visible=[true,true,true,true];
 
 const fmt  = n => new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
@@ -705,8 +706,8 @@ function onBoldUI(){
   const on  = document.getElementById("boldUIToggle").checked;
   const btn = document.getElementById("exportBtn");
   const shareBtn = document.getElementById("shareBtn");
-  if(btn) btn.style.display = on ? "" : "none";
-  if(shareBtn) shareBtn.style.display = on ? "" : "none";
+  if(btn) btn.style.display = (on && !viewerMode) ? "" : "none";
+  if(shareBtn) shareBtn.style.display = (on && !viewerMode) ? "" : "none";
   onBoldMenu(on);
   const sidebar = document.querySelector(".sidebar");  if(on) sidebar.classList.add("bold-ui");
   else   sidebar.classList.remove("bold-ui");
@@ -749,8 +750,9 @@ function toggleVisibility(i){
 function renderCards(){
   const c=document.getElementById("cards");
   c.innerHTML=[0,1,2,3].map(i=>{
-    // Collapsed state — show a small "Show" button
+    // Hidden estimate — completely invisible in viewer mode, collapsed button otherwise
     if(!visible[i]){
+      if(viewerMode) return '';
       return`<div class="collapsed-est" style="background:${COLORS[i]}" onclick="toggleVisibility(${i})">
         ${eyeOpen} <span>SHOW ESTIMATE</span>
       </div>`;
@@ -1605,11 +1607,11 @@ renderLegend();
 rebuildChart();
 
 // ── Viewer Mode ───────────────────────────────────────────────────
-let viewerMode = false;
 
 function activateViewerMode(){
   viewerMode = true;
   document.querySelector('.app').classList.add('viewer-mode');
+  renderCards(); // re-render so hidden estimates are fully removed from DOM
   const t = document.getElementById("boldUIToggle");
   if(t && !t.checked){ t.checked = true; onBoldUI(); }
   // Hide both buttons — viewer can't edit or reshare
@@ -1651,7 +1653,7 @@ function buildShareableURL(){
   // All estimate span data
   [1,2,3,4].forEach(n=>{
     const i=n-1;
-    [5,10,30].forEach(yr=>{
+    [10,20,30].forEach(yr=>{
       const d=spanData[i][yr];
       p.set(`e${n}events${yr}`, d.totalEvents);
       p.set(`e${n}days${yr}`,   d.daysPerEvent);
@@ -1678,21 +1680,28 @@ function buildShareableURL(){
 }
 
 async function copyShareableLink(){
-  const url  = buildShareableURL();
-  const btn  = document.getElementById('shareBtn');
+  const btn = document.getElementById('shareBtn');
+  const orig = btn ? btn.innerHTML : '';
+  function flash(msg){ if(btn){ btn.textContent = msg; setTimeout(()=>{ btn.innerHTML = orig; }, 2000); } }
   try {
-    await navigator.clipboard.writeText(url);
-    const orig = btn.innerHTML;
-    btn.textContent = '✓ Copied!';
-    setTimeout(()=>{ btn.innerHTML = orig; }, 2000);
+    const url = buildShareableURL();
+    let copied = false;
+    // Try modern clipboard API; if blocked fall through to execCommand
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      try { await navigator.clipboard.writeText(url); copied = true; } catch(_){}
+    }
+    if(!copied){
+      const inp = document.createElement('input');
+      inp.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      inp.value = url; document.body.appendChild(inp);
+      inp.focus(); inp.select();
+      document.execCommand('copy');
+      document.body.removeChild(inp);
+    }
+    flash('✓ Copied!');
   } catch(e){
-    // Fallback: select a temporary input
-    const inp = document.createElement('input');
-    inp.value = url; document.body.appendChild(inp);
-    inp.select(); document.execCommand('copy'); inp.remove();
-    const orig = btn.innerHTML;
-    btn.textContent = '✓ Copied!';
-    setTimeout(()=>{ btn.innerHTML = orig; }, 2000);
+    console.error('copyShareableLink:', e);
+    flash('⚠ Try again');
   }
 }
 
@@ -1735,7 +1744,7 @@ async function copyShareableLink(){
   // Estimate values: e1–e4, spans 5/10/30, fields events/days
   [1,2,3,4].forEach(n=>{
     const i = n-1;
-    [5,10,30].forEach(yr=>{
+    [10,20,30].forEach(yr=>{
       const evKey   = `e${n}events${yr}`;
       const daysKey = `e${n}days${yr}`;
       if(p.has(evKey)){
@@ -1754,14 +1763,14 @@ async function copyShareableLink(){
   if(p.has("10yr")) setSpan(10);
   if(p.has("20yr")) setSpan(20);
 
-  if(p.has("steel")||p.has("solid")||p.has("cpd")) onUniversal();
-  else if(needsRender){ renderCards(); rebuildChart(); }
-
-  // Restore estimate visibility
+  // Restore estimate visibility BEFORE rendering so cards reflect correct state
   if(p.has("vis")){
     const v = p.get("vis");
     [0,1,2,3].forEach(i=>{ visible[i] = v[i] !== '0'; });
   }
+
+  if(p.has("steel")||p.has("solid")||p.has("cpd")) onUniversal();
+  else if(needsRender){ renderCards(); rebuildChart(); }
 
   if(p.has("tab") && p.get("tab")==="install") switchTab("install");
   if(p.has("NoTitle"))    document.querySelector('.app').classList.add('no-title');
